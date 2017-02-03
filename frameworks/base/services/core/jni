@@ -1,0 +1,104 @@
+//In this you have to create jni module as below
+
++++ b/services/core/jni/Android.mk
+@@ -33,6 +33,7 @@ LOCAL_SRC_FILES += \
+     $(LOCAL_REL_DIR)/com_android_server_UsbHostManager.cpp \
+     $(LOCAL_REL_DIR)/com_android_server_VibratorService.cpp \
+     $(LOCAL_REL_DIR)/com_symbol_keymapping_KeyMappingMgr.cpp \
++    $(LOCAL_REL_DIR)/com_android_server_myservice_MySampleSystemService.cpp \
+
+
+-------------------------------------------------------------------------------
+
++++ b/services/core/jni/com_android_server_myservice_MySampleSystemService.cpp
+@@ -0,0 +1,85 @@
++#define LOG_TAG "anish"
++
++#include "jni.h"
++#include "JNIHelp.h"
++#include "android_runtime/AndroidRuntime.h"
++#include <utils/misc.h>
++#include <utils/Log.h>
++#include <hardware/hardware.h>
++#include <hardware/mhalmodule.h>
++#include <stdio.h>
++
++namespace android {
++	
++	struct my_device_t *ref_to_hal_device;
++	
++	
++	/**
++* JNI Layer init function;
++* Load HAL and its method table for later use;
++* return a pointer to the same structure
++* (not mandatory btw, we can use a global variable)
++*/
++	
++static jlong init_native(JNIEnv *env, jobject clazz) {
++int err;
++struct hw_module_t *module;
++struct hw_device_t *device ;
++ALOGE("Entering jni cpp file init%s\n", __func__);
++ALOGE("%d\n", __LINE__);
++/* Load the HAL module using libhardware hw_get_module */
++err = hw_get_module(HAL_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
++
++ALOGE("%s\t%d\n",strerror(err), __LINE__);
++if (err) {
++ALOGE("%d\n", __LINE__);
++//TODO
++}
++ALOGE("%d\n", __LINE__);
++/* Open the HAL object and get the my_device_t structure
++* filled with methods pointers
++*/
++err = module->methods->open(module, "hardware_impl", &device);
++ALOGE("%s\t%d\n",strerror(err), __LINE__);
++
++if (err) {
++ALOGE("%d\n", __LINE__);
++//TODO
++}
++ALOGE("%d\n", __LINE__);
++ref_to_hal_device = (struct my_device_t *)device;
++ALOGE("%d\n", __LINE__);
++return (jlong)ref_to_hal_device;
++}
++	
++	/**
++*  wrapper function;
++* Call the native  function from Framework layer
++*/
++static void calling_func_hal(jlong *nativePointer) {
++int err;
++ALOGE("Entering finally %s\n", __func__);
++ALOGE("%d\n", __LINE__);
++err = ref_to_hal_device->my_function();
++ALOGE("%s\t%d\n%d\n",strerror(err), __LINE__,err);
++
++if (err) {
++ALOGE("%d\n", __LINE__);
++//TODO
++}
++}
++	
++	static JNINativeMethod method_table[] = {
++    { "init_native", "()J", (void*)init_native },
++    { "calling_func_hal", "(J)V", (void*)calling_func_hal },
++   };
++
++
++int register_android_server_myservice_MySampleSystemService(JNIEnv *env) {
++    return jniRegisterNativeMethods(env, "com/android/server/myservice/MySampleSystemService",
++         method_table, NELEM(method_table));
++                                                      }
++
++};
++	
++	
+--------------------------------------------------
++++ b/services/core/jni/onload.cpp
+
++int register_android_server_myservice_MySampleSystemService(JNIEnv* env);
+
