@@ -1,0 +1,130 @@
++++ b/include/hardware/mhalmodule.h
+@@ -0,0 +1,21 @@
++#ifndef __ANDROID__ANISH
++#define __ANDROID__ANISH
++#include <stdint.h>
++#include <sys/cdefs.h>
++#include <sys/types.h>
++#include <hardware/hardware.h>
++__BEGIN_DECLS
++#define HAL_HARDWARE_MODULE_ID "hardware_impl"
++/**
++* The my_device_t device description structure;
++* First field must be the hw_device_t field;
++* Other fields can be function pointers and othe exported fields
++*/
++struct my_device_t {
++/* Will be used in HAL open method */
++struct hw_device_t common;
++/* Pointers to your HAL functions */
++int (*my_function)(void);
++};
++__END_DECLS
++#endif
+
+--------------------------------------------------------------------------------------------
++++ b/modules/Android.mk
+
++	hardware_impl
+
+--------------------------------------------------------------------------------------------
+
+modules/hardware_impl/Android.mk
++LOCAL_PATH := $(call my-dir)
++include  $(CLEAR_VARS)
++
++LOCAL_SRC_FILES :=mhalmodule.cpp
++           
++LOCAL_MODULE_RELATIVE_PATH :=hw
++
++LOCAL_MODULE := hardware_impl.default
++
++LOCAL_MODULE_TAGS := optional
++LOCAL_SHARED_LIBRARIES := liblog
++include  $(BUILD_SHARED_LIBRARY)
+
+-----------------------------------------------------------------------------------------
+modules/hardware_impl/mhalmodule.cpp
+
++
++/**
++* @file mhalmodule.cpp
++* @brief Implements mhalmodule's HW abstraction layer
++*/
++ #define LOG_NDEBUG 0
++#define LOG_NIDEBUG 0
++#define LOG_NDDEBUG 0
++#include <stdint.h>
++#include <string.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <cutils/log.h>
++#include <android/log.h>
++#include <hardware/mhalmodule.h>
++
++
++#define LOG_TAG "anish"
++/**
++* The function(s) exported by this HAL
++*/
++int my_function_impl(){
++__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "\n this is log my_function_impl \n");
++ALOGE("Hello Android!!\n");
++/* Here you should interface with your HW devices... */
++return 39;
++}
++/** This is mandatory, and part of hw_device_t */
++int close_halmodule(hw_device_t* hw_dev) {
++//TODO
++return 0;
++}
++/**
++* A pointer to this method is stored in
++* hw_module_method_t.open;
++*
++* Once JNI loads the hw_module_method_t symbol, it
++* can call this function and "open" the HAL layer
++* receiving pointers to this module's additional methods
++*/
++static int open_halmodule(const struct hw_module_t *module,
++char const *name, struct hw_device_t **device) {
++    struct my_device_t* dev = (struct my_device_t*)malloc(sizeof(struct my_device_t));
++    if (NULL == dev) {
++        ALOGE("Unable to reserve memory for joffee: %s\n",
++        strerror(errno));
++        return -ENOMEM;
++     }
++     __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG,"openmethos");
++ALOGE("open_halmodule Android!!\n");
++/* Store pointer to HAL function(s) */
++dev->my_function = my_function_impl;
++/* Initialize common fields */
++dev->common.tag = HARDWARE_DEVICE_TAG;
++dev->common.version = 0;
++dev->common.module = (struct hw_module_t *)module;
++dev->common.close = close_halmodule;
++/* Store this module's structure in the output parameter 'device' */
++/* Remember the first field of your HAL device must be an hw_device_t */
++*device = (struct hw_device_t *)dev;
++return 0;
++}
++/*
++* The mhalmodule HAL description
++* Will be loaded using libhardware
++*/
++static struct hw_module_methods_t mhalmodule_methods =
++{
++.open = open_halmodule,
++};
++struct hw_module_t HAL_MODULE_INFO_SYM =
++{
++.tag = HARDWARE_MODULE_TAG,
++.version_major = 0,
++.version_minor = 1,
++.id = HAL_HARDWARE_MODULE_ID,
++.name = "My HAL",
++.author = "Anish",
++.methods = &mhalmodule_methods,
++};
