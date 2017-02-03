@@ -2,9 +2,7 @@
 
 +++ b/services/core/jni/Android.mk
 @@ -33,6 +33,7 @@ LOCAL_SRC_FILES += \
-     $(LOCAL_REL_DIR)/com_android_server_UsbHostManager.cpp \
-     $(LOCAL_REL_DIR)/com_android_server_VibratorService.cpp \
-     $(LOCAL_REL_DIR)/com_symbol_keymapping_KeyMappingMgr.cpp \
+     
 +    $(LOCAL_REL_DIR)/com_android_server_myservice_MySampleSystemService.cpp \
 
 
